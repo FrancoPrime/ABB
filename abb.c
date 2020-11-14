@@ -6,6 +6,10 @@
 #define ABB_RECORRER_POSTORDEN 2
 #define EXITO 0
 #define ERROR -1
+#define EL_PRIMERO_ES_MAYOR 1
+#define EL_PRIMERO_ES_MENOR -1
+#define SON_IGUALES 0
+
 
 /*
  * Comparador de elementos. Recibe dos elementos del arbol y devuelve
@@ -49,8 +53,8 @@ abb_t* arbol_crear(abb_comparador comparador, abb_liberar_elemento destructor){
   if(!arbol)
     return NULL;
   arbol->nodo_raiz = NULL;
-  arbol->abb_comparador = comparador;
-  arbol->abb_liberar_elemento = destructor;
+  arbol->comparador = comparador;
+  arbol->destructor = destructor;
   return arbol;
 }
 
@@ -62,32 +66,44 @@ abb_t* arbol_crear(abb_comparador comparador, abb_liberar_elemento destructor){
 int arbol_insertar(abb_t* arbol, void* elemento){
   if(!arbol)
     return ERROR;
-  nodo_abb* nuevo_nodo = malloc(sizeof(nodo_abb));
+  nodo_abb_t* nuevo_nodo = malloc(sizeof(nodo_abb_t));
   if(!nuevo_nodo)
     return ERROR;
   nuevo_nodo->elemento = elemento;
-  if(arbol->nodo_raiz == NULL)
-  {
+  nuevo_nodo->derecha = NULL;
+  nuevo_nodo->izquierda = NULL;
+  if(arbol->nodo_raiz == NULL){
     arbol->nodo_raiz = nuevo_nodo;
   }
-  else
-  {
+  else{
     bool encontre_posicion = false;
-    nodo_abb* nodo_actual = arbol->nodo_raiz;
-    while(!encontre_posicion)
-    {
-      if(arbol->abb_comparador(elemento, nodo_actual->elemento) == 1)
-      {
-        if(nodo_actual->derecha == NULL)
-        {
+    nodo_abb_t* nodo_actual = arbol->nodo_raiz;
+    while(!encontre_posicion){
+      int resultado = arbol->comparador(elemento, nodo_actual->elemento);
+      if(resultado == EL_PRIMERO_ES_MAYOR || resultado == SON_IGUALES){
+        if(nodo_actual->derecha == NULL){
           encontre_posicion = true;
-          
+          nodo_actual->derecha = nuevo_nodo;
+        }
+        else{
+          nodo_actual = nodo_actual->derecha;
+        }
+      }
+      else{
+        if(nodo_actual->izquierda == NULL){
+          encontre_posicion = true;
+          nodo_actual->izquierda = nuevo_nodo;
+        }
+        else{
+          nodo_actual = nodo_actual->izquierda;
         }
       }
     }
   }
   return EXITO;
 }
+
+
 
 /*
  * Busca en el arbol un elemento igual al provisto (utilizando la
@@ -98,7 +114,8 @@ int arbol_insertar(abb_t* arbol, void* elemento){
  */
 int arbol_borrar(abb_t* arbol, void* elemento){
   if(!arbol)
-    return NULL;
+    return ERROR;
+
   return ERROR;
 }
 
@@ -111,17 +128,18 @@ int arbol_borrar(abb_t* arbol, void* elemento){
 void* arbol_buscar(abb_t* arbol, void* elemento){
   if(!arbol)
     return NULL;
-  nodo_abb* nodo_actual = arbol->nodo_raiz;
+  nodo_abb_t* nodo_actual = arbol->nodo_raiz;
   bool encontrado = false;
   while(!encontrado)
   {
+    int resultado = arbol->comparador(elemento,nodo_actual->elemento);
     if(nodo_actual == NULL)
       encontrado = true;
-    else if(arbol->abb_comparador(elemento,nodo_actual->elemento) == 1)
+    else if(resultado == EL_PRIMERO_ES_MAYOR)
       nodo_actual = nodo_actual->derecha;
-    else if(arbol->abb_comparador(elemento,nodo_actual->elemento) == -1)
+    else if(resultado == EL_PRIMERO_ES_MENOR)
       nodo_actual = nodo_actual->izquierda;
-    else if(arbol->abb_comparador(elemento,nodo_actual->elemento) == 0)
+    else
       encontrado = true;
   }
   if(nodo_actual == NULL) return NULL;
@@ -135,7 +153,7 @@ void* arbol_buscar(abb_t* arbol, void* elemento){
 void* arbol_raiz(abb_t* arbol){
   if(!arbol)
     return NULL;
-  return(arbol->nodo_raiz);
+  return(arbol->nodo_raiz->elemento);
 }
 
 /*
@@ -156,7 +174,9 @@ bool arbol_vacio(abb_t* arbol){
  * llena hasta donde puede y devuelve la cantidad de elementos que
  * pudo poner).
  */
-size_t arbol_recorrido_inorden(abb_t* arbol, void** array, size_t tamanio_array);
+size_t arbol_recorrido_inorden(abb_t* arbol, void** array, size_t tamanio_array){
+  return 0;
+}
 
 /*
  * Llena el array del tamaño dado con los elementos de arbol
@@ -166,7 +186,9 @@ size_t arbol_recorrido_inorden(abb_t* arbol, void** array, size_t tamanio_array)
  * llena hasta donde puede y devuelve la cantidad de elementos que
  * pudo poner).
  */
-size_t arbol_recorrido_preorden(abb_t* arbol, void** array, size_t tamanio_array);
+size_t arbol_recorrido_preorden(abb_t* arbol, void** array, size_t tamanio_array){
+  return 0;
+}
 
 /*
  * Llena el array del tamaño dado con los elementos de arbol
@@ -176,7 +198,9 @@ size_t arbol_recorrido_preorden(abb_t* arbol, void** array, size_t tamanio_array
  * llena hasta donde puede y devuelve la cantidad de elementos que
  * pudo poner).
  */
-size_t arbol_recorrido_postorden(abb_t* arbol, void** array, size_t tamanio_array);
+size_t arbol_recorrido_postorden(abb_t* arbol, void** array, size_t tamanio_array){
+  return 0;
+}
 
 /*
  * Destruye el arbol liberando la memoria reservada por el mismo.
@@ -201,4 +225,6 @@ void arbol_destruir(abb_t* arbol){
  * y ABB_RECORRER_POSTORDEN.
  * Devuelve la cantidad de elementos que fueron recorridos.
 */
-size_t abb_con_cada_elemento(abb_t* arbol, int recorrido, bool (*funcion)(void*, void*), void* extra);
+size_t abb_con_cada_elemento(abb_t* arbol, int recorrido, bool (*funcion)(void*, void*), void* extra){
+  return 0;
+}
