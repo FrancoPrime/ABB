@@ -1,5 +1,6 @@
 #include "abb.h"
 #include <stdio.h>
+#include "pa2mm.h"
 
 typedef struct cosa{
     int clave;
@@ -71,7 +72,7 @@ int main(){
     cosa* c6= crear_cosa(6);
     cosa* c7= crear_cosa(7);
     cosa* auxiliar = crear_cosa(0);
-    
+
     arbol_insertar(arbol, c4);
     arbol_insertar(arbol, c2);
     arbol_insertar(arbol, c6);
@@ -115,46 +116,46 @@ int main(){
     arbol_insertar(arbol, crear_cosa(7));
     arbol_insertar(arbol, crear_cosa(4));
 
-    
-    printf("Recorrido inorden iterador interno: ");    
+
+    printf("Recorrido inorden iterador interno: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, mostrar_elemento, NULL);
     printf("\n");
 
-    printf("Recorrido preorden iterador interno: ");    
+    printf("Recorrido preorden iterador interno: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, mostrar_elemento, NULL);
     printf("\n");
-    
-    printf("Recorrido postorden iterador interno: ");    
+
+    printf("Recorrido postorden iterador interno: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, mostrar_elemento, NULL);
     printf("\n");
 
-    printf("\nRecorrido inorden hasta encontrar el 5: ");    
+    printf("\nRecorrido inorden hasta encontrar el 5: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, mostrar_hasta_5, NULL);
     printf("\n");
 
-    printf("Recorrido preorden hasta encontrar el 5: ");    
+    printf("Recorrido preorden hasta encontrar el 5: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, mostrar_hasta_5, NULL);
     printf("\n");
 
-    printf("Recorrido postorden hasta encontrar el 5: ");    
+    printf("Recorrido postorden hasta encontrar el 5: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, mostrar_hasta_5, NULL);
     printf("\n");
 
     int acumulador=0;
-    printf("\nRecorrido inorden acumulando los valores: ");    
+    printf("\nRecorrido inorden acumulando los valores: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, mostrar_acumulado, &acumulador);
     printf("\n");
 
     acumulador=0;
-    printf("Recorrido preorden acumulando los valores: ");    
+    printf("Recorrido preorden acumulando los valores: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, mostrar_acumulado, &acumulador);
     printf("\n");
 
     acumulador=0;
-    printf("Recorrido postorden acumulando los valores: ");    
+    printf("Recorrido postorden acumulando los valores: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, mostrar_acumulado, &acumulador);
     printf("\n");
-    
+
     free(auxiliar);
     arbol_destruir(arbol);
     return 0;
