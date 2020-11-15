@@ -104,59 +104,56 @@ int arbol_insertar(abb_t* arbol, void* elemento){
   return EXITO;
 }
 
-//Pre: Se recibe un nodo no nulo
-//Post: devuelve el nodo con el menor elemento de esa rama
-void* sacar_minimo_elemento(nodo_abb_t* nodo)
+//Pre: Se recibe un nodo no nulo y un elemento a borrar
+//Post: Se halla el minimo, se remplaza por el elemento a borrar y se devuelve el original
+void* sacar_minimo_elemento(nodo_abb_t* nodo, void* elemento_a_borrar)
 {
   while(nodo->izquierda != NULL)
   {
     nodo = nodo->izquierda;
   }
-  return nodo->elemento;
+  void* auxiliar = nodo->elemento;
+  nodo->elemento = elemento_a_borrar;
+  return auxiliar;
 }
 
 //Recibe un nodo y un elemento a borrar
 //Si corresponde borra el actual y devuelve null
-//En caso de que pasar_destructor sea true, pasa el destructor al elemento
 //Sino se llama a sí misma con otro nodo hijo del actual y devuelve el nodo actual
-nodo_abb_t* destruir_nodo(abb_t* arbol, nodo_abb_t* nodo, void* elemento, bool pasar_destructor)
+nodo_abb_t* destruir_nodo(abb_t* arbol, nodo_abb_t* nodo, void* elemento)
 {
   int resultado = arbol->comparador(elemento, nodo->elemento);
   if(resultado == EL_PRIMERO_ES_MAYOR)
-    nodo->derecha = destruir_nodo(arbol, nodo->derecha, elemento, pasar_destructor);
+    nodo->derecha = destruir_nodo(arbol, nodo->derecha, elemento);
   else if(resultado == EL_PRIMERO_ES_MENOR)
-    nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, elemento, pasar_destructor);
+    nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, elemento);
   else if(resultado == SON_IGUALES)
   {
     if(nodo->derecha == NULL && nodo->izquierda == NULL)
     {
-      if(pasar_destructor)
-        arbol->destructor(nodo->elemento);
+      arbol->destructor(nodo->elemento);
       free(nodo);
       nodo = NULL;
     }
     else if(nodo->derecha == NULL)
     {
       nodo_abb_t* auxiliar = nodo->izquierda;
-      if(pasar_destructor)
-        arbol->destructor(nodo->elemento);
+      arbol->destructor(nodo->elemento);
       free(nodo);
       nodo = auxiliar;
     }
     else if(nodo->izquierda == NULL)
     {
       nodo_abb_t* auxiliar = nodo->derecha;
-      if(pasar_destructor)
-        arbol->destructor(nodo->elemento);
+      arbol->destructor(nodo->elemento);
       free(nodo);
       nodo = auxiliar;
     }
     else
     {
-      if(pasar_destructor)
-        arbol->destructor(nodo->elemento);
-      nodo->elemento = sacar_minimo_elemento(nodo->derecha);
-      nodo->derecha = destruir_nodo(arbol, nodo->derecha, nodo->elemento, false);
+      void* auxiliar = nodo->elemento;
+      nodo->elemento = sacar_minimo_elemento(nodo->derecha, auxiliar);
+      nodo->derecha = destruir_nodo(arbol, nodo->derecha, auxiliar);
     }
   }
   return nodo;
@@ -210,7 +207,7 @@ int arbol_borrar(abb_t* arbol, void* elemento){
     return ERROR;
   if(arbol_buscar(arbol, elemento) == NULL)
     return ERROR;
-  arbol->nodo_raiz = destruir_nodo(arbol, arbol->nodo_raiz, elemento, true);
+  arbol->nodo_raiz = destruir_nodo(arbol, arbol->nodo_raiz, elemento);
   return EXITO;
 }
 
