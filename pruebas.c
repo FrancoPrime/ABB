@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include "pa2mm.h"
 
+#define ERROR -1
+#define EXITO 0
+
 typedef struct cosa{
     int clave;
     char contenido[10];
@@ -21,7 +24,6 @@ void destruir_cosa(cosa* c){
 int comparar_cosas(void* elemento1, void* elemento2){
     if(!elemento1 || !elemento2)
         return 0;
-
     if(((cosa*)elemento1)->clave>((cosa*)elemento2)->clave)
         return 1;
     if(((cosa*)elemento1)->clave<((cosa*)elemento2)->clave)
@@ -60,65 +62,100 @@ bool mostrar_acumulado(void* elemento, void* extra){
     return false;
 }
 
+void probar_operaciones_arbol()
+{
+  abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+  cosa* c1= crear_cosa(1);
+  cosa* c2= crear_cosa(2);
+  cosa* c3= crear_cosa(3);
+  cosa* c4= crear_cosa(4);
+  cosa* c5= crear_cosa(5);
+  cosa* c7= crear_cosa(7);
+  cosa* c8= crear_cosa(8);
+  cosa* c10= crear_cosa(10);
+  cosa* c11= crear_cosa(11);
+  cosa* auxiliar = crear_cosa(0);
+
+  pa2m_afirmar(arbol_insertar(arbol, c2) == EXITO, "Me permite insertar un elemento en un arbol");
+  arbol_insertar(arbol, c1);
+  arbol_insertar(arbol, c5);
+  arbol_insertar(arbol, c3);
+  arbol_insertar(arbol, c4);
+  arbol_insertar(arbol, c10);
+  arbol_insertar(arbol, c7);
+  arbol_insertar(arbol, c8);
+  pa2m_afirmar(arbol_insertar(arbol, c11) == EXITO, "Me permite insertar varios elementos en un arbol");
+
+  pa2m_afirmar(((cosa*)arbol_raiz(arbol))->clave==2, "El nodo raiz es el que corresponde");
+
+  auxiliar->clave = 8;
+  pa2m_afirmar(((cosa*)arbol_buscar(arbol, auxiliar))->clave==8, "Busco un elemento y lo encuentro");
+
+  auxiliar->clave = 1;
+  pa2m_afirmar(arbol_borrar(arbol, auxiliar)==EXITO, "Me permite borrar un elemento hoja");
+
+  auxiliar->clave = 5;
+  pa2m_afirmar(arbol_borrar(arbol, auxiliar)==EXITO, "Me permite borrar un elemento con dos hijos");
+
+  auxiliar->clave = 3;
+  pa2m_afirmar(arbol_borrar(arbol, auxiliar)==EXITO, "Me permite borrar un elemento con un hijo");
+
+  auxiliar->clave = 2;
+  pa2m_afirmar(arbol_borrar(arbol, auxiliar)==EXITO, "Me permite borrar la raíz del arbol");
+
+  free(auxiliar);
+  arbol_destruir(arbol);
+}
+
+void probar_cosas_con_NULL()
+{
+  pa2m_afirmar(arbol_crear(NULL, NULL) == NULL, "No me deja crear un arbol sin comparador");
+  pa2m_afirmar(arbol_insertar(NULL, (void*)1) == ERROR, "No me deja insertar en un arbol NULL");
+  pa2m_afirmar(arbol_borrar(NULL, (void*)1) == ERROR, "No me deja borrar en un arbol NULL");
+  pa2m_afirmar(arbol_buscar(NULL, (void*)1) == NULL, "No me deja buscar en un arbol NULL");
+  pa2m_afirmar(arbol_raiz(NULL) == NULL, "La raíz de un arbol NULL es NULL");
+  pa2m_afirmar(arbol_vacio(NULL) == true, "Un arbol NULL está vacio");
+  cosa* elementos[10];
+  pa2m_afirmar(arbol_recorrido_inorden(NULL, (void**)elementos, 10) == 0, "No me deja recorrer inorder un arbol NULL");
+  pa2m_afirmar(arbol_recorrido_preorden(NULL, (void**)elementos, 10) == 0, "No me deja recorrer preorder un arbol NULL");
+  pa2m_afirmar(arbol_recorrido_postorden(NULL, (void**)elementos, 10) == 0, "No me deja recorrer postorder un arbol NULL");
+  pa2m_afirmar(abb_con_cada_elemento(NULL, ABB_RECORRER_INORDEN, mostrar_hasta_5, NULL) == 0, "No me deja iterar un arbol NULL");
+}
+
+void probar_arbol_vacio()
+{
+  abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+  cosa* auxiliar = crear_cosa(3);
+  pa2m_afirmar(arbol != NULL && arbol->nodo_raiz == NULL, "Puedo crear un arbol");
+  pa2m_afirmar(arbol_buscar(arbol, auxiliar) == NULL, "Busco en un arbol vacio y me devuelve NULL");
+  pa2m_afirmar(arbol_borrar(arbol, auxiliar) == ERROR, "Intento borrar de un arbol vacio y no me deja");
+  pa2m_afirmar(arbol_raiz(arbol) == NULL, "El elemento raíz no existe");
+  pa2m_afirmar(arbol_vacio(arbol) == true, "El arbol está vacio");
+  arbol_destruir(arbol);
+  free(auxiliar);
+}
 
 int main(){
-    abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+    //abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
 
-    cosa* c1= crear_cosa(1);
-    cosa* c2= crear_cosa(2);
-    cosa* c3= crear_cosa(3);
-    cosa* c4= crear_cosa(4);
-    cosa* c5= crear_cosa(5);
-    cosa* c7= crear_cosa(7);
-    cosa* c8= crear_cosa(8);
-    cosa* c10= crear_cosa(10);
-    cosa* c11= crear_cosa(11);
-    cosa* auxiliar = crear_cosa(0);
 
-    arbol_insertar(arbol, c2);
-    arbol_insertar(arbol, c1);
-    arbol_insertar(arbol, c5);
-    arbol_insertar(arbol, c3);
-    arbol_insertar(arbol, c4);
-    arbol_insertar(arbol, c10);
-    arbol_insertar(arbol, c7);
-    arbol_insertar(arbol, c8);
-    arbol_insertar(arbol, c11);
 
-    printf("El nodo raiz deberia ser 2: %s\n", ((cosa*)arbol_raiz(arbol))->clave==2?"SI":"NO");
 
-    auxiliar->clave = 8;
-    printf("Busco el elemento 8: %s\n", ((cosa*)arbol_buscar(arbol, auxiliar))->clave==8?"SI":"NO");
 
-    auxiliar->clave = 1;
-    printf("Borro nodo hoja (1): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-
-    auxiliar->clave = 5;
-    printf("Borro nodo con dos hijos (5): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-
-    auxiliar->clave = 3;
-    printf("Borro nodo con un hijo (3): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-
-    auxiliar->clave = 2;
-    printf("Borro la raiz (2): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-    //1,5,3,2
-    printf("El nodo raiz deberia ser 7: %s\n", ((cosa*)arbol_raiz(arbol))->clave==7?"SI":"NO");
-
-    cosa* elementos[10];
+    /*cosa* elementos[10];
 
     printf("Recorrido postorden: ");
     size_t cantidad = arbol_recorrido_postorden(arbol, (void**)elementos, 10);
     printf(" %lu < cant ", cantidad);
     for(size_t i=0;i<cantidad;i++)
         printf("%i ", elementos[i]->clave);
-    printf("\n");
+    printf("\n");*/
 
-    printf("\n\nInserto mas valores y pruebo el iterador interno\n\n");
+    /*printf("\n\nInserto mas valores y pruebo el iterador interno\n\n");
     arbol_insertar(arbol, crear_cosa(15));
     arbol_insertar(arbol, crear_cosa(0));
     arbol_insertar(arbol, crear_cosa(9));
-    arbol_insertar(arbol, crear_cosa(7));
-    arbol_insertar(arbol, crear_cosa(4));
+    arbol_insertar(arbol, crear_cosa(5));
 
 
     printf("Recorrido inorden iterador interno: ");
@@ -158,9 +195,15 @@ int main(){
     acumulador=0;
     printf("Recorrido postorden acumulando los valores: ");
     abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, mostrar_acumulado, &acumulador);
-    printf("\n");
+    printf("\n");*/
 
-    free(auxiliar);
-    arbol_destruir(arbol);
-    return 0;
+    //free(auxiliar);
+    //arbol_destruir(arbol);
+    pa2m_nuevo_grupo("Creación y funcionamiento de arbol vacio");
+    probar_arbol_vacio();
+    pa2m_nuevo_grupo("Probando cosas con NULL");
+    probar_cosas_con_NULL();
+    pa2m_nuevo_grupo("Operaciones de árbol");
+    probar_operaciones_arbol();
+    return pa2m_mostrar_reporte();
 }

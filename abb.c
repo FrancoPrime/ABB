@@ -176,7 +176,7 @@ bool arbol_vacio(abb_t* arbol){
  * Devuelve el elemento encontrado o NULL si no lo encuentra.
  */
 void* arbol_buscar(abb_t* arbol, void* elemento){
-  if(!arbol)
+  if(arbol_vacio(arbol))
     return NULL;
   nodo_abb_t* nodo_actual = arbol->nodo_raiz;
   bool encontrado = false;
@@ -216,7 +216,7 @@ int arbol_borrar(abb_t* arbol, void* elemento){
  * vacío o no existe.
  */
 void* arbol_raiz(abb_t* arbol){
-  if(!arbol)
+  if(arbol_vacio(arbol))
     return NULL;
   return(arbol->nodo_raiz->elemento);
 }
@@ -349,6 +349,74 @@ void arbol_destruir(abb_t* arbol){
   free(arbol);
 }
 
+size_t iteracion_inorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
+{
+  if(nodo == NULL || (*detenerse))
+    return 0;
+  if(nodo->izquierda == NULL)
+  {
+    *detenerse = funcion(nodo->elemento, extra);
+    if(*detenerse)
+      return 1;
+    return 1 + iteracion_inorden(nodo->derecha, funcion, extra, detenerse);
+  }
+  else
+  {
+    size_t parcial = iteracion_inorden(nodo->izquierda, funcion, extra, detenerse);
+    if(*detenerse)
+      return parcial;
+    *detenerse = funcion(nodo->elemento, extra);
+    if(*detenerse)
+      return 1+parcial;
+    return 1 + parcial + iteracion_inorden(nodo->derecha, funcion, extra, detenerse);
+  }
+}
+
+size_t iteracion_preorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
+{
+  if(nodo == NULL || (*detenerse))
+    return 0;
+  *detenerse = funcion(nodo->elemento, extra);
+  if(*detenerse)
+    return 1;
+  if(nodo->izquierda == NULL)
+  {
+    return 1 + iteracion_preorden(nodo->derecha, funcion, extra, detenerse);
+  }
+  else
+  {
+    size_t parcial = iteracion_preorden(nodo->izquierda, funcion, extra, detenerse);
+    if(*detenerse)
+      return 1 + parcial;
+    return 1 + parcial + iteracion_preorden(nodo->derecha, funcion, extra, detenerse);
+  }
+}
+
+size_t iteracion_postorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
+{
+  if(nodo == NULL || (*detenerse))
+    return 0;
+  if(nodo->izquierda == NULL)
+  {
+    size_t parcial = iteracion_postorden(nodo->derecha, funcion, extra, detenerse);
+    if(*detenerse)
+      return parcial;
+    *detenerse = funcion(nodo->elemento, extra);
+    return 1 + parcial;
+  }
+  else
+  {
+    size_t parcial = iteracion_postorden(nodo->izquierda, funcion, extra, detenerse);
+    if(*detenerse)
+      return parcial;
+    parcial += iteracion_postorden(nodo->derecha, funcion, extra, detenerse);
+    if(*detenerse)
+      return parcial;
+    *detenerse = funcion(nodo->elemento, extra);
+    return 1 + parcial;
+  }
+}
+
 /*
  * Iterador interno. Recorre el arbol e invoca la funcion con cada
  * elemento del mismo. El puntero 'extra' se pasa como segundo
@@ -363,6 +431,19 @@ void arbol_destruir(abb_t* arbol){
 size_t abb_con_cada_elemento(abb_t* arbol, int recorrido, bool (*funcion)(void*, void*), void* extra){
   if(!arbol || !funcion)
     return 0;
-
-  return 0;
+  nodo_abb_t* nodo = arbol->nodo_raiz;
+  size_t cantidad_recorrida=0;
+  bool detenerse = false;
+  switch (recorrido) {
+    case ABB_RECORRER_INORDEN:
+      cantidad_recorrida = iteracion_inorden(nodo, funcion, extra, &detenerse);
+      break;
+    case ABB_RECORRER_PREORDEN:
+      cantidad_recorrida = iteracion_preorden(nodo, funcion, extra, &detenerse);
+      break;
+    case ABB_RECORRER_POSTORDEN:
+      cantidad_recorrida = iteracion_postorden(nodo, funcion, extra, &detenerse);
+      break;
+  }
+  return cantidad_recorrida;
 }
