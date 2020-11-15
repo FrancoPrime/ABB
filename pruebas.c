@@ -69,37 +69,40 @@ int main(){
     cosa* c3= crear_cosa(3);
     cosa* c4= crear_cosa(4);
     cosa* c5= crear_cosa(5);
-    cosa* c6= crear_cosa(6);
     cosa* c7= crear_cosa(7);
+    cosa* c8= crear_cosa(8);
+    cosa* c10= crear_cosa(10);
+    cosa* c11= crear_cosa(11);
     cosa* auxiliar = crear_cosa(0);
 
-    arbol_insertar(arbol, c4);
     arbol_insertar(arbol, c2);
-    arbol_insertar(arbol, c6);
     arbol_insertar(arbol, c1);
-    arbol_insertar(arbol, c3);
     arbol_insertar(arbol, c5);
+    arbol_insertar(arbol, c3);
+    arbol_insertar(arbol, c4);
+    arbol_insertar(arbol, c10);
     arbol_insertar(arbol, c7);
+    arbol_insertar(arbol, c8);
+    arbol_insertar(arbol, c11);
 
-    printf("El nodo raiz deberia ser 4: %s\n", ((cosa*)arbol_raiz(arbol))->clave==4?"SI":"NO");
+    printf("El nodo raiz deberia ser 2: %s\n", ((cosa*)arbol_raiz(arbol))->clave==2?"SI":"NO");
+
+    auxiliar->clave = 8;
+    printf("Busco el elemento 8: %s\n", ((cosa*)arbol_buscar(arbol, auxiliar))->clave==8?"SI":"NO");
+
+    auxiliar->clave = 1;
+    printf("Borro nodo hoja (1): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
 
     auxiliar->clave = 5;
-    printf("Busco el elemento 5: %s\n", ((cosa*)arbol_buscar(arbol, auxiliar))->clave==5?"SI":"NO");
-
-    auxiliar->clave = 7;
-    printf("Borro nodo hoja (7): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-
-    auxiliar->clave = 6;
-    printf("Borro nodo con un hijo (6): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-
-    auxiliar->clave = 2;
-    printf("Borro nodo con dos hijos (2): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-
-    auxiliar->clave = 4;
-    printf("Borro la raiz (4): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
+    printf("Borro nodo con dos hijos (5): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
 
     auxiliar->clave = 3;
-    printf("Busco el elemento (3): %s\n", ((cosa*)arbol_buscar(arbol, auxiliar))->clave==3?"SI":"NO");
+    printf("Borro nodo con un hijo (3): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
+
+    auxiliar->clave = 2;
+    printf("Borro la raiz (2): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
+
+    printf("El nodo raiz deberia ser 2: %s\n", ((cosa*)arbol_raiz(arbol))->clave==2?"SI":"NO");
 
     cosa* elementos[10];
 

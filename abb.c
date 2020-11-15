@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define ABB_RECORRER_INORDEN   0
 #define ABB_RECORRER_PREORDEN  1
@@ -103,20 +104,72 @@ int arbol_insertar(abb_t* arbol, void* elemento){
   return EXITO;
 }
 
+//Pre: Se recibe un nodo no nulo
+//Post: devuelve el nodo con el menor elemento de esa rama
+void* sacar_minimo_elemento(nodo_abb_t* nodo)
+{
+  while(nodo->izquierda != NULL)
+  {
+    nodo = nodo->izquierda;
+  }
+  return nodo->elemento;
+}
 
+//Recibe un nodo y un elemento a borrar
+//Si corresponde borra el actual y devuelve null
+//En caso de que pasar_destructor sea true, pasa el destructor al elemento
+//Sino se llama a sí misma con otro nodo hijo del actual y devuelve el nodo actual
+nodo_abb_t* destruir_nodo(abb_t* arbol, nodo_abb_t* nodo, void* elemento, bool pasar_destructor)
+{
+  int resultado = arbol->comparador(elemento, nodo->elemento);
+  if(resultado == EL_PRIMERO_ES_MAYOR)
+    nodo->derecha = destruir_nodo(arbol, nodo->derecha, elemento, pasar_destructor);
+  else if(resultado == EL_PRIMERO_ES_MENOR)
+    nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, elemento, pasar_destructor);
+  else if(resultado == SON_IGUALES)
+  {
+    if(nodo->derecha == NULL && nodo->izquierda == NULL)
+    {
+      if(pasar_destructor)
+        arbol->destructor(nodo->elemento);
+      free(nodo);
+      nodo = NULL;
+    }
+    else if(nodo->derecha == NULL)
+    {
+      nodo_abb_t* auxiliar = nodo->izquierda;
+      if(pasar_destructor)
+        arbol->destructor(nodo->elemento);
+      free(nodo);
+      nodo = auxiliar;
+    }
+    else if(nodo->izquierda == NULL)
+    {
+      nodo_abb_t* auxiliar = nodo->derecha;
+      if(pasar_destructor)
+        arbol->destructor(nodo->elemento);
+      free(nodo);
+      nodo = auxiliar;
+    }
+    else
+    {
+      if(pasar_destructor)
+        arbol->destructor(nodo->elemento);
+      nodo->elemento = sacar_minimo_elemento(nodo->derecha);
+      nodo->derecha = destruir_nodo(arbol, nodo->derecha, nodo->elemento, false);
+    }
+  }
+  return nodo;
+}
 
 /*
- * Busca en el arbol un elemento igual al provisto (utilizando la
- * funcion de comparación) y si lo encuentra lo quita del arbol.
- * Adicionalmente, si encuentra el elemento, invoca el destructor con
- * dicho elemento.
- * Devuelve 0 si pudo eliminar el elemento o -1 en caso contrario.
+ * Determina si el árbol está vacío.
+ * Devuelve true si está vacío o el arbol es NULL, false si el árbol tiene elementos.
  */
-int arbol_borrar(abb_t* arbol, void* elemento){
+bool arbol_vacio(abb_t* arbol){
   if(!arbol)
-    return ERROR;
-
-  return ERROR;
+    return true;
+  return(arbol->nodo_raiz == NULL);
 }
 
 /*
@@ -130,20 +183,35 @@ void* arbol_buscar(abb_t* arbol, void* elemento){
     return NULL;
   nodo_abb_t* nodo_actual = arbol->nodo_raiz;
   bool encontrado = false;
-  while(!encontrado)
+  while(!encontrado && nodo_actual != NULL)
   {
-    int resultado = arbol->comparador(elemento,nodo_actual->elemento);
-    if(nodo_actual == NULL)
-      encontrado = true;
-    else if(resultado == EL_PRIMERO_ES_MAYOR)
+    int resultado = arbol->comparador(elemento, nodo_actual->elemento);
+    if(resultado == EL_PRIMERO_ES_MAYOR)
       nodo_actual = nodo_actual->derecha;
     else if(resultado == EL_PRIMERO_ES_MENOR)
       nodo_actual = nodo_actual->izquierda;
     else
       encontrado = true;
   }
-  if(nodo_actual == NULL) return NULL;
+  if(nodo_actual == NULL)
+    return NULL;
   return (nodo_actual->elemento);
+}
+
+/*
+ * Busca en el arbol un elemento igual al provisto (utilizando la
+ * funcion de comparación) y si lo encuentra lo quita del arbol.
+ * Adicionalmente, si encuentra el elemento, invoca el destructor con
+ * dicho elemento.
+ * Devuelve 0 si pudo eliminar el elemento o -1 en caso contrario.
+ */
+int arbol_borrar(abb_t* arbol, void* elemento){
+  if(arbol_vacio(arbol))
+    return ERROR;
+  if(arbol_buscar(arbol, elemento) == NULL)
+    return ERROR;
+  arbol->nodo_raiz = destruir_nodo(arbol, arbol->nodo_raiz, elemento, true);
+  return EXITO;
 }
 
 /*
@@ -157,16 +225,6 @@ void* arbol_raiz(abb_t* arbol){
 }
 
 /*
- * Determina si el árbol está vacío.
- * Devuelve true si está vacío o el arbol es NULL, false si el árbol tiene elementos.
- */
-bool arbol_vacio(abb_t* arbol){
-  if(!arbol)
-    return NULL;
-  return(arbol->nodo_raiz == NULL);
-}
-
-/*
  * Llena el array del tamaño dado con los elementos de arbol
  * en secuencia inorden.
  * Devuelve la cantidad de elementos del array que pudo llenar (si el
@@ -175,7 +233,16 @@ bool arbol_vacio(abb_t* arbol){
  * pudo poner).
  */
 size_t arbol_recorrido_inorden(abb_t* arbol, void** array, size_t tamanio_array){
-  return 0;
+  if(!arbol || tamanio_array == 0)
+    return 0;
+  size_t tamanio_actual = 0;
+  nodo_abb_t* nodo_actual = arbol->nodo_raiz;
+  while(tamanio_actual < tamanio_array)
+  {
+    
+    tamanio_actual++;
+  }
+  return tamanio_actual;
 }
 
 /*
@@ -187,6 +254,8 @@ size_t arbol_recorrido_inorden(abb_t* arbol, void** array, size_t tamanio_array)
  * pudo poner).
  */
 size_t arbol_recorrido_preorden(abb_t* arbol, void** array, size_t tamanio_array){
+  if(!arbol || tamanio_array == 0)
+    return 0;
   return 0;
 }
 
@@ -199,6 +268,8 @@ size_t arbol_recorrido_preorden(abb_t* arbol, void** array, size_t tamanio_array
  * pudo poner).
  */
 size_t arbol_recorrido_postorden(abb_t* arbol, void** array, size_t tamanio_array){
+  if(!arbol || tamanio_array == 0)
+    return 0;
   return 0;
 }
 
@@ -210,7 +281,10 @@ size_t arbol_recorrido_postorden(abb_t* arbol, void** array, size_t tamanio_arra
 void arbol_destruir(abb_t* arbol){
   if(!arbol)
     return;
-  //DESTRUIR TODOS LOS ELEMENTOS
+  while(arbol->nodo_raiz != NULL)
+  {
+    arbol_borrar(arbol, arbol->nodo_raiz->elemento);
+  }
   free(arbol);
 }
 
@@ -226,5 +300,8 @@ void arbol_destruir(abb_t* arbol){
  * Devuelve la cantidad de elementos que fueron recorridos.
 */
 size_t abb_con_cada_elemento(abb_t* arbol, int recorrido, bool (*funcion)(void*, void*), void* extra){
+  if(!arbol || !funcion)
+    return 0;
+
   return 0;
 }
