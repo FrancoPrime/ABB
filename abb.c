@@ -224,6 +224,68 @@ void* arbol_raiz(abb_t* arbol){
   return(arbol->nodo_raiz->elemento);
 }
 
+void recorrido_inorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* indice)
+{
+  if(nodo == NULL || *indice >= tope)
+    return;
+  if(nodo->izquierda == NULL)
+  {
+    array[*indice] = nodo->elemento;
+    (*indice)++;
+    recorrido_inorden_aux(nodo->derecha, array, tope, indice);
+  }
+  else
+  {
+    recorrido_inorden_aux(nodo->izquierda, array, tope, indice);
+    if(*indice < tope)
+    {
+      array[*indice] = nodo->elemento;
+      (*indice)++;
+      recorrido_inorden_aux(nodo->derecha, array, tope, indice);
+    }
+  }
+}
+
+void recorrido_preorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* indice)
+{
+  if(nodo == NULL || *indice >= tope)
+    return;
+  array[*indice] = nodo->elemento;
+  (*indice)++;
+  if(nodo->izquierda == NULL)
+    recorrido_preorden_aux(nodo->derecha, array, tope, indice);
+  else
+  {
+    recorrido_preorden_aux(nodo->izquierda, array, tope, indice);
+    recorrido_preorden_aux(nodo->derecha, array, tope, indice);
+  }
+}
+
+void recorrido_postorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* indice)
+{
+  if(nodo == NULL || *indice >= tope)
+    return;
+  if(nodo->izquierda == NULL)
+  {
+    recorrido_postorden_aux(nodo->derecha, array, tope, indice);
+    if(*indice < tope)
+    {
+      array[*indice] = nodo->elemento;
+      (*indice)++;
+    }
+  }
+  else
+  {
+    recorrido_postorden_aux(nodo->izquierda, array, tope, indice);
+    recorrido_postorden_aux(nodo->derecha, array, tope, indice);
+    if(*indice < tope)
+    {
+      array[*indice] = nodo->elemento;
+      (*indice)++;
+    }
+  }
+}
+
 /*
  * Llena el array del tamaño dado con los elementos de arbol
  * en secuencia inorden.
@@ -237,11 +299,7 @@ size_t arbol_recorrido_inorden(abb_t* arbol, void** array, size_t tamanio_array)
     return 0;
   size_t tamanio_actual = 0;
   nodo_abb_t* nodo_actual = arbol->nodo_raiz;
-  while(tamanio_actual < tamanio_array)
-  {
-    
-    tamanio_actual++;
-  }
+  recorrido_inorden_aux(nodo_actual, array, tamanio_array, &tamanio_actual);
   return tamanio_actual;
 }
 
@@ -256,7 +314,10 @@ size_t arbol_recorrido_inorden(abb_t* arbol, void** array, size_t tamanio_array)
 size_t arbol_recorrido_preorden(abb_t* arbol, void** array, size_t tamanio_array){
   if(!arbol || tamanio_array == 0)
     return 0;
-  return 0;
+  size_t tamanio_actual = 0;
+  nodo_abb_t* nodo_actual = arbol->nodo_raiz;
+  recorrido_preorden_aux(nodo_actual, array, tamanio_array, &tamanio_actual);
+  return tamanio_actual;
 }
 
 /*
@@ -270,7 +331,10 @@ size_t arbol_recorrido_preorden(abb_t* arbol, void** array, size_t tamanio_array
 size_t arbol_recorrido_postorden(abb_t* arbol, void** array, size_t tamanio_array){
   if(!arbol || tamanio_array == 0)
     return 0;
-  return 0;
+  size_t tamanio_actual = 0;
+  nodo_abb_t* nodo_actual = arbol->nodo_raiz;
+  recorrido_postorden_aux(nodo_actual, array, tamanio_array, &tamanio_actual);
+  return tamanio_actual;
 }
 
 /*

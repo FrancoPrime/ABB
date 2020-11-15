@@ -101,13 +101,14 @@ int main(){
 
     auxiliar->clave = 2;
     printf("Borro la raiz (2): %s\n", (arbol_borrar(arbol, auxiliar))==0?"SI":"NO");
-
-    printf("El nodo raiz deberia ser 2: %s\n", ((cosa*)arbol_raiz(arbol))->clave==2?"SI":"NO");
+    //1,5,3,2
+    printf("El nodo raiz deberia ser 7: %s\n", ((cosa*)arbol_raiz(arbol))->clave==7?"SI":"NO");
 
     cosa* elementos[10];
 
-    printf("Recorrido inorden (deberian salir en orden 1 3 5): ");
-    size_t cantidad = arbol_recorrido_inorden(arbol, (void**)elementos, 10);
+    printf("Recorrido postorden: ");
+    size_t cantidad = arbol_recorrido_postorden(arbol, (void**)elementos, 10);
+    printf(" %lu < cant ", cantidad);
     for(size_t i=0;i<cantidad;i++)
         printf("%i ", elementos[i]->clave);
     printf("\n");
