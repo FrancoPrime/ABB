@@ -37,29 +37,99 @@ void destructor_de_cosas(void* elemento){
     destruir_cosa((cosa*)elemento);
 }
 
-bool mostrar_elemento(void* elemento, void* extra){
-    extra=extra; //para que no se queje el compilador, gracias -Werror -Wall
-    if(elemento)
-        printf("%i ", ((cosa*)elemento)->clave);
-    return false;
-}
-
-bool mostrar_hasta_5(void* elemento, void* extra){
-    extra=extra; //para que no se queje el compilador, gracias -Werror -Wall
-    if(elemento){
-        printf("%i ", ((cosa*)elemento)->clave);
-        if(((cosa*)elemento)->clave == 5)
-            return true;
-    }
-    return false;
-}
-
-bool mostrar_acumulado(void* elemento, void* extra){
+bool hacer_acumulado_hasta_8(void* elemento, void* extra){
     if(elemento && extra){
         *(int*)extra += ((cosa*)elemento)->clave;
-        printf("%i ", *(int*)extra);
     }
-    return false;
+    return (((cosa*)elemento)->clave == 8);
+}
+
+bool hacer_acumulado_hasta_10(void* elemento, void* extra){
+    if(elemento && extra){
+        *(int*)extra += ((cosa*)elemento)->clave;
+    }
+    return (((cosa*)elemento)->clave == 10);
+}
+
+void probar_recorridos()
+{
+  abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+
+  arbol_insertar(arbol, crear_cosa(8));
+  arbol_insertar(arbol, crear_cosa(6));
+  arbol_insertar(arbol, crear_cosa(7));
+  arbol_insertar(arbol, crear_cosa(5));
+  arbol_insertar(arbol, crear_cosa(14));
+  arbol_insertar(arbol, crear_cosa(21));
+  arbol_insertar(arbol, crear_cosa(20));
+  cosa* elementos[10];
+
+  size_t cantidad = arbol_recorrido_inorden(arbol, (void**)elementos, 1);
+  pa2m_afirmar(cantidad == 1 && elementos[0]->clave == 5, "El limitador de llenado de array funciona")
+
+  cantidad = arbol_recorrido_inorden(arbol, (void**)elementos, 10);
+  pa2m_afirmar(cantidad == 7 && elementos[0]->clave == 5 && elementos[4]->clave == 14, "El primer recorrido inorden se realiza correctamente");
+  cantidad = arbol_recorrido_preorden(arbol, (void**)elementos, 10);
+  pa2m_afirmar(cantidad == 7 && elementos[0]->clave == 8 && elementos[4]->clave == 14, "El primer recorrido preorden se realiza correctamente");
+  cantidad = arbol_recorrido_postorden(arbol, (void**)elementos, 10);
+  pa2m_afirmar(cantidad == 7 && elementos[0]->clave == 5 && elementos[4]->clave == 21, "El primer recorrido postorden se realiza correctamente");
+
+  arbol_insertar(arbol, crear_cosa(1));
+  arbol_insertar(arbol, crear_cosa(0));
+  arbol_insertar(arbol, crear_cosa(4));
+  arbol_insertar(arbol, crear_cosa(10));
+
+  cantidad = arbol_recorrido_inorden(arbol, (void**)elementos, 10);
+  pa2m_afirmar(cantidad == 10 && elementos[0]->clave == 0 && elementos[4]->clave == 6, "El segundo recorrido inorden se realiza correctamente");
+  cantidad = arbol_recorrido_preorden(arbol, (void**)elementos, 10);
+  pa2m_afirmar(cantidad == 10 && elementos[0]->clave == 8 && elementos[4]->clave == 0, "El segundo recorrido preorden se realiza correctamente");
+  cantidad = arbol_recorrido_postorden(arbol, (void**)elementos, 10);
+  pa2m_afirmar(cantidad == 10 && elementos[1]->clave == 4 && elementos[9]->clave == 14, "El segundo recorrido postorden se realiza correctamente");
+
+  arbol_destruir(arbol);
+}
+void probar_iterador_interno()
+{
+  abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+
+  arbol_insertar(arbol, crear_cosa(8));
+  arbol_insertar(arbol, crear_cosa(6));
+  arbol_insertar(arbol, crear_cosa(7));
+  arbol_insertar(arbol, crear_cosa(5));
+  arbol_insertar(arbol, crear_cosa(14));
+  arbol_insertar(arbol, crear_cosa(21));
+  arbol_insertar(arbol, crear_cosa(20));
+
+  int acumulador=0;
+  size_t iterados = abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, hacer_acumulado_hasta_8, &acumulador);
+  pa2m_afirmar(acumulador == 26 && iterados == 4, "Primer recorrido del iterador inorden correcto")
+
+  acumulador=0;
+  iterados = abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, hacer_acumulado_hasta_8, &acumulador);
+  pa2m_afirmar(acumulador == 8 && iterados == 1, "Primer recorrido del iterador preorden correcto")
+
+  acumulador=0;
+  iterados = abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, hacer_acumulado_hasta_8, &acumulador);
+  pa2m_afirmar(acumulador == 81 && iterados == 7, "Primer recorrido del iterador postorden correcto")
+
+  arbol_insertar(arbol, crear_cosa(1));
+  arbol_insertar(arbol, crear_cosa(0));
+  arbol_insertar(arbol, crear_cosa(4));
+  arbol_insertar(arbol, crear_cosa(10));
+
+  acumulador=0;
+  iterados = abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, hacer_acumulado_hasta_10, &acumulador);
+  pa2m_afirmar(acumulador == 41 && iterados == 8, "Segundo recorrido del iterador inorden correcto")
+
+  acumulador=0;
+  iterados = abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, hacer_acumulado_hasta_10, &acumulador);
+  pa2m_afirmar(acumulador == 55 && iterados == 9, "Segundo recorrido del iterador preorden correcto")
+
+  acumulador=0;
+  iterados = abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, hacer_acumulado_hasta_10, &acumulador);
+  pa2m_afirmar(acumulador == 33 && iterados == 7, "Segundo recorrido del iterador postorden correcto")
+
+  arbol_destruir(arbol);
 }
 
 void probar_operaciones_arbol()
@@ -119,7 +189,7 @@ void probar_cosas_con_NULL()
   pa2m_afirmar(arbol_recorrido_inorden(NULL, (void**)elementos, 10) == 0, "No me deja recorrer inorder un arbol NULL");
   pa2m_afirmar(arbol_recorrido_preorden(NULL, (void**)elementos, 10) == 0, "No me deja recorrer preorder un arbol NULL");
   pa2m_afirmar(arbol_recorrido_postorden(NULL, (void**)elementos, 10) == 0, "No me deja recorrer postorder un arbol NULL");
-  pa2m_afirmar(abb_con_cada_elemento(NULL, ABB_RECORRER_INORDEN, mostrar_hasta_5, NULL) == 0, "No me deja iterar un arbol NULL");
+  pa2m_afirmar(abb_con_cada_elemento(NULL, ABB_RECORRER_INORDEN, hacer_acumulado_hasta_8, NULL) == 0, "No me deja iterar un arbol NULL");
 }
 
 void probar_arbol_vacio()
@@ -136,74 +206,14 @@ void probar_arbol_vacio()
 }
 
 int main(){
-    //abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
-
-
-
-
-
-    /*cosa* elementos[10];
-
-    printf("Recorrido postorden: ");
-    size_t cantidad = arbol_recorrido_postorden(arbol, (void**)elementos, 10);
-    printf(" %lu < cant ", cantidad);
-    for(size_t i=0;i<cantidad;i++)
-        printf("%i ", elementos[i]->clave);
-    printf("\n");*/
-
-    /*printf("\n\nInserto mas valores y pruebo el iterador interno\n\n");
-    arbol_insertar(arbol, crear_cosa(15));
-    arbol_insertar(arbol, crear_cosa(0));
-    arbol_insertar(arbol, crear_cosa(9));
-    arbol_insertar(arbol, crear_cosa(5));
-
-
-    printf("Recorrido inorden iterador interno: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, mostrar_elemento, NULL);
-    printf("\n");
-
-    printf("Recorrido preorden iterador interno: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, mostrar_elemento, NULL);
-    printf("\n");
-
-    printf("Recorrido postorden iterador interno: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, mostrar_elemento, NULL);
-    printf("\n");
-
-    printf("\nRecorrido inorden hasta encontrar el 5: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, mostrar_hasta_5, NULL);
-    printf("\n");
-
-    printf("Recorrido preorden hasta encontrar el 5: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, mostrar_hasta_5, NULL);
-    printf("\n");
-
-    printf("Recorrido postorden hasta encontrar el 5: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, mostrar_hasta_5, NULL);
-    printf("\n");
-
-    int acumulador=0;
-    printf("\nRecorrido inorden acumulando los valores: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, mostrar_acumulado, &acumulador);
-    printf("\n");
-
-    acumulador=0;
-    printf("Recorrido preorden acumulando los valores: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_PREORDEN, mostrar_acumulado, &acumulador);
-    printf("\n");
-
-    acumulador=0;
-    printf("Recorrido postorden acumulando los valores: ");
-    abb_con_cada_elemento(arbol, ABB_RECORRER_POSTORDEN, mostrar_acumulado, &acumulador);
-    printf("\n");*/
-
-    //free(auxiliar);
-    //arbol_destruir(arbol);
     pa2m_nuevo_grupo("Creación y funcionamiento de arbol vacio");
     probar_arbol_vacio();
     pa2m_nuevo_grupo("Probando cosas con NULL");
     probar_cosas_con_NULL();
     pa2m_nuevo_grupo("Operaciones de árbol");
     probar_operaciones_arbol();
+    probar_recorridos();
+    pa2m_nuevo_grupo("Iterador interno");
+    probar_iterador_interno();
     return pa2m_mostrar_reporte();
 }
