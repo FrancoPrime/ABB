@@ -321,6 +321,74 @@ void probar_arbol_vacio()
   free(auxiliar);
 }
 
+void probar_100_elementos()
+{
+  abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+  for(int i=20;i<30;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=5;i<10;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=40;i<50;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=70;i<80;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=10;i<20;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=100;i<160;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  cosa* auxiliar = crear_cosa(81);
+  pa2m_afirmar(arbol_buscar(arbol, auxiliar) == NULL, "Agrego +100 elementos y busco un elemento inexistente");
+  auxiliar->clave = 79;
+  pa2m_afirmar(((cosa*)arbol_buscar(arbol, auxiliar))->clave == auxiliar->clave, "Luego busco un elemento existente");
+  free(auxiliar);
+  int acumulador=0;
+  size_t iterados = abb_con_cada_elemento(arbol, ABB_RECORRER_INORDEN, hacer_acumulado_hasta_8, &acumulador);
+  pa2m_afirmar(acumulador == 26 && iterados == 4, "Se realiza una iteración con condicion de corte")
+  arbol_destruir(arbol);
+}
+
+void probar_1000_elementos()
+{
+  abb_t* arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+
+  for(int i=500;i<600;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=20;i<30;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=110;i<120;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=5;i<10;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=800;i<900;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=40;i<50;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=1600;i<1750;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=70;i<80;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=600;i<700;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=10;i<20;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=100;i<160;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  for(int i=1000;i<1200;i++)
+    arbol_insertar(arbol, crear_cosa(i));
+  cosa* auxiliar = crear_cosa(81);
+  pa2m_afirmar(arbol_buscar(arbol, auxiliar) == NULL, "Agrego +1000 elementos y busco un elemento inexistente");
+  auxiliar->clave = 500;
+  pa2m_afirmar(arbol_borrar(arbol, auxiliar) == EXITO, "Me deja borrar la raíz");
+  free(auxiliar);
+  arbol_destruir(arbol);
+}
+
+void probar_estres()
+{
+  probar_100_elementos();
+  probar_1000_elementos();
+}
+
 int main(){
   pa2m_nuevo_grupo("Creación y funcionamiento de arbol vacio");
   probar_arbol_vacio();
@@ -331,5 +399,7 @@ int main(){
   probar_recorridos();
   pa2m_nuevo_grupo("Iterador interno");
   probar_iterador_interno();
+  pa2m_nuevo_grupo("Pruebas de estres");
+  probar_estres();
   return pa2m_mostrar_reporte();
 }
