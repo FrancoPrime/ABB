@@ -108,9 +108,9 @@ int arbol_insertar(abb_t* arbol, void* elemento){
 //Post: Se halla el minimo, se remplaza por el elemento a borrar y se devuelve el original
 void* sacar_minimo_elemento(nodo_abb_t* nodo, void* elemento_a_borrar)
 {
-  while(nodo->izquierda != NULL)
+  while(nodo->derecha != NULL)
   {
-    nodo = nodo->izquierda;
+    nodo = nodo->derecha;
   }
   void* auxiliar = nodo->elemento;
   nodo->elemento = elemento_a_borrar;
@@ -120,40 +120,48 @@ void* sacar_minimo_elemento(nodo_abb_t* nodo, void* elemento_a_borrar)
 //Recibe un nodo y un elemento a borrar
 //Si corresponde borra el actual y devuelve null
 //Sino se llama a sí misma con otro nodo hijo del actual y devuelve el nodo actual
-nodo_abb_t* destruir_nodo(abb_t* arbol, nodo_abb_t* nodo, void* elemento)
+nodo_abb_t* destruir_nodo(abb_t* arbol, nodo_abb_t* nodo, void* elemento, bool* se_pudo_borrar)
 {
+  if(!nodo)
+    return NULL;
   int resultado = arbol->comparador(elemento, nodo->elemento);
   if(resultado == EL_PRIMERO_ES_MAYOR)
-    nodo->derecha = destruir_nodo(arbol, nodo->derecha, elemento);
+    nodo->derecha = destruir_nodo(arbol, nodo->derecha, elemento, se_pudo_borrar);
   else if(resultado == EL_PRIMERO_ES_MENOR)
-    nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, elemento);
+    nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, elemento, se_pudo_borrar);
   else if(resultado == SON_IGUALES)
   {
     if(nodo->derecha == NULL && nodo->izquierda == NULL)
     {
-      arbol->destructor(nodo->elemento);
+      if(arbol->destructor)
+        arbol->destructor(nodo->elemento);
       free(nodo);
       nodo = NULL;
+      *se_pudo_borrar = true;
     }
     else if(nodo->derecha == NULL)
     {
       nodo_abb_t* auxiliar = nodo->izquierda;
-      arbol->destructor(nodo->elemento);
+      if(arbol->destructor)
+        arbol->destructor(nodo->elemento);
       free(nodo);
       nodo = auxiliar;
+      *se_pudo_borrar = true;
     }
     else if(nodo->izquierda == NULL)
     {
       nodo_abb_t* auxiliar = nodo->derecha;
-      arbol->destructor(nodo->elemento);
+      if(arbol->destructor)
+        arbol->destructor(nodo->elemento);
       free(nodo);
       nodo = auxiliar;
+      *se_pudo_borrar = true;
     }
     else
     {
       void* auxiliar = nodo->elemento;
-      nodo->elemento = sacar_minimo_elemento(nodo->derecha, auxiliar);
-      nodo->derecha = destruir_nodo(arbol, nodo->derecha, auxiliar);
+      nodo->elemento = sacar_minimo_elemento(nodo->izquierda, auxiliar);
+      nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, auxiliar, se_pudo_borrar);
     }
   }
   return nodo;
@@ -205,10 +213,9 @@ void* arbol_buscar(abb_t* arbol, void* elemento){
 int arbol_borrar(abb_t* arbol, void* elemento){
   if(arbol_vacio(arbol))
     return ERROR;
-  if(arbol_buscar(arbol, elemento) == NULL)
-    return ERROR;
-  arbol->nodo_raiz = destruir_nodo(arbol, arbol->nodo_raiz, elemento);
-  return EXITO;
+  bool se_pudo_borrar=false;
+  arbol->nodo_raiz = destruir_nodo(arbol, arbol->nodo_raiz, elemento, &se_pudo_borrar);
+  return (se_pudo_borrar ? EXITO : ERROR);
 }
 
 /*
@@ -225,21 +232,12 @@ void recorrido_inorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* 
 {
   if(nodo == NULL || *indice >= tope)
     return;
-  if(nodo->izquierda == NULL)
+  recorrido_inorden_aux(nodo->izquierda, array, tope, indice);
+  if(*indice < tope)
   {
     array[*indice] = nodo->elemento;
     (*indice)++;
     recorrido_inorden_aux(nodo->derecha, array, tope, indice);
-  }
-  else
-  {
-    recorrido_inorden_aux(nodo->izquierda, array, tope, indice);
-    if(*indice < tope)
-    {
-      array[*indice] = nodo->elemento;
-      (*indice)++;
-      recorrido_inorden_aux(nodo->derecha, array, tope, indice);
-    }
   }
 }
 
@@ -249,37 +247,20 @@ void recorrido_preorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t*
     return;
   array[*indice] = nodo->elemento;
   (*indice)++;
-  if(nodo->izquierda == NULL)
-    recorrido_preorden_aux(nodo->derecha, array, tope, indice);
-  else
-  {
-    recorrido_preorden_aux(nodo->izquierda, array, tope, indice);
-    recorrido_preorden_aux(nodo->derecha, array, tope, indice);
-  }
+  recorrido_preorden_aux(nodo->izquierda, array, tope, indice);
+  recorrido_preorden_aux(nodo->derecha, array, tope, indice);
 }
 
 void recorrido_postorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* indice)
 {
   if(nodo == NULL || *indice >= tope)
     return;
-  if(nodo->izquierda == NULL)
+  recorrido_postorden_aux(nodo->izquierda, array, tope, indice);
+  recorrido_postorden_aux(nodo->derecha, array, tope, indice);
+  if(*indice < tope)
   {
-    recorrido_postorden_aux(nodo->derecha, array, tope, indice);
-    if(*indice < tope)
-    {
-      array[*indice] = nodo->elemento;
-      (*indice)++;
-    }
-  }
-  else
-  {
-    recorrido_postorden_aux(nodo->izquierda, array, tope, indice);
-    recorrido_postorden_aux(nodo->derecha, array, tope, indice);
-    if(*indice < tope)
-    {
-      array[*indice] = nodo->elemento;
-      (*indice)++;
-    }
+    array[*indice] = nodo->elemento;
+    (*indice)++;
   }
 }
 
@@ -334,6 +315,18 @@ size_t arbol_recorrido_postorden(abb_t* arbol, void** array, size_t tamanio_arra
   return tamanio_actual;
 }
 
+//Precon: Recibe un arbol y un nodo
+//Post: destruye todos los nodos hijos a partir del pasado
+void destructor_de_nodos(abb_t* arbol, nodo_abb_t* nodo){
+  if(nodo == NULL)
+    return;
+  destructor_de_nodos(arbol, nodo->izquierda);
+  destructor_de_nodos(arbol, nodo->derecha);
+  if(arbol->destructor)
+    arbol->destructor(nodo->elemento);
+  free(nodo);
+}
+
 /*
  * Destruye el arbol liberando la memoria reservada por el mismo.
  * Adicionalmente invoca el destructor con cada elemento presente en
@@ -342,10 +335,7 @@ size_t arbol_recorrido_postorden(abb_t* arbol, void** array, size_t tamanio_arra
 void arbol_destruir(abb_t* arbol){
   if(!arbol)
     return;
-  while(arbol->nodo_raiz != NULL)
-  {
-    arbol_borrar(arbol, arbol->nodo_raiz->elemento);
-  }
+  destructor_de_nodos(arbol, arbol->nodo_raiz);
   free(arbol);
 }
 
@@ -353,23 +343,13 @@ size_t iteracion_inorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* 
 {
   if(nodo == NULL || (*detenerse))
     return 0;
-  if(nodo->izquierda == NULL)
-  {
-    *detenerse = funcion(nodo->elemento, extra);
-    if(*detenerse)
-      return 1;
-    return 1 + iteracion_inorden(nodo->derecha, funcion, extra, detenerse);
-  }
-  else
-  {
-    size_t parcial = iteracion_inorden(nodo->izquierda, funcion, extra, detenerse);
-    if(*detenerse)
-      return parcial;
-    *detenerse = funcion(nodo->elemento, extra);
-    if(*detenerse)
-      return 1+parcial;
-    return 1 + parcial + iteracion_inorden(nodo->derecha, funcion, extra, detenerse);
-  }
+  size_t parcial = iteracion_inorden(nodo->izquierda, funcion, extra, detenerse);
+  if(*detenerse)
+    return parcial;
+  *detenerse = funcion(nodo->elemento, extra);
+  if(*detenerse)
+    return 1+parcial;
+  return 1 + parcial + iteracion_inorden(nodo->derecha, funcion, extra, detenerse);
 }
 
 size_t iteracion_preorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
@@ -379,42 +359,24 @@ size_t iteracion_preorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void*
   *detenerse = funcion(nodo->elemento, extra);
   if(*detenerse)
     return 1;
-  if(nodo->izquierda == NULL)
-  {
-    return 1 + iteracion_preorden(nodo->derecha, funcion, extra, detenerse);
-  }
-  else
-  {
-    size_t parcial = iteracion_preorden(nodo->izquierda, funcion, extra, detenerse);
-    if(*detenerse)
-      return 1 + parcial;
-    return 1 + parcial + iteracion_preorden(nodo->derecha, funcion, extra, detenerse);
-  }
+  size_t parcial = iteracion_preorden(nodo->izquierda, funcion, extra, detenerse);
+  if(*detenerse)
+    return 1 + parcial;
+  return 1 + parcial + iteracion_preorden(nodo->derecha, funcion, extra, detenerse);
 }
 
 size_t iteracion_postorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
 {
   if(nodo == NULL || (*detenerse))
     return 0;
-  if(nodo->izquierda == NULL)
-  {
-    size_t parcial = iteracion_postorden(nodo->derecha, funcion, extra, detenerse);
-    if(*detenerse)
-      return parcial;
-    *detenerse = funcion(nodo->elemento, extra);
-    return 1 + parcial;
-  }
-  else
-  {
-    size_t parcial = iteracion_postorden(nodo->izquierda, funcion, extra, detenerse);
-    if(*detenerse)
-      return parcial;
-    parcial += iteracion_postorden(nodo->derecha, funcion, extra, detenerse);
-    if(*detenerse)
-      return parcial;
-    *detenerse = funcion(nodo->elemento, extra);
-    return 1 + parcial;
-  }
+  size_t parcial = iteracion_postorden(nodo->izquierda, funcion, extra, detenerse);
+  if(*detenerse)
+    return parcial;
+  parcial += iteracion_postorden(nodo->derecha, funcion, extra, detenerse);
+  if(*detenerse)
+    return parcial;
+  *detenerse = funcion(nodo->elemento, extra);
+  return 1 + parcial;
 }
 
 /*
