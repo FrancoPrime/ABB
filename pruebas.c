@@ -281,8 +281,36 @@ void probar_borrado_de_elementos()
   auxiliar->clave = 3;
   arbol_borrar(arbol, auxiliar);
   pa2m_afirmar(arbol_buscar(arbol, auxiliar)==NULL, "Me permite borrar un elemento con un hijo");
-  free(auxiliar);
   arbol_destruir(arbol);
+
+  arbol = arbol_crear(comparar_cosas, destructor_de_cosas);
+  cosa* elementos[7];
+  arbol_insertar(arbol, crear_cosa(2));
+  arbol_insertar(arbol, crear_cosa(1));
+  arbol_insertar(arbol, crear_cosa(5));
+  arbol_insertar(arbol, crear_cosa(3));
+  arbol_insertar(arbol, crear_cosa(4));
+  arbol_insertar(arbol, crear_cosa(10));
+  arbol_insertar(arbol, crear_cosa(7));
+  arbol_insertar(arbol, crear_cosa(8));
+  arbol_insertar(arbol, crear_cosa(11));
+  auxiliar->clave = 10;
+  arbol_borrar(arbol, auxiliar);
+  auxiliar->clave = 5;
+  arbol_borrar(arbol, auxiliar);
+  arbol_recorrido_inorden(arbol, (void**)elementos, 7);
+  int i=0, actual = 0;
+  bool respeta_orden = true;
+  while(i < 7 && respeta_orden)
+  {
+    if(elementos[i]->clave < actual)
+      respeta_orden = false;
+    actual = elementos[i]->clave;
+    i++;
+  }
+  pa2m_afirmar(respeta_orden, "Luego de un borrado se respetan las condiciones de ABB");
+  arbol_destruir(arbol);
+  free(auxiliar);
 }
 
 void probar_operaciones_arbol()
@@ -375,10 +403,17 @@ void probar_1000_elementos()
     arbol_insertar(arbol, crear_cosa(i));
   for(int i=1000;i<1200;i++)
     arbol_insertar(arbol, crear_cosa(i));
-  cosa* auxiliar = crear_cosa(81);
-  pa2m_afirmar(arbol_buscar(arbol, auxiliar) == NULL, "Agrego +1000 elementos y busco un elemento inexistente");
+  cosa* auxiliar = crear_cosa(79);
+  pa2m_afirmar(arbol_buscar(arbol, auxiliar) != NULL, "Agrego +1000 elementos y busco un elemento existente");
   auxiliar->clave = 500;
   pa2m_afirmar(arbol_borrar(arbol, auxiliar) == EXITO, "Me deja borrar la raíz");
+  for(int i=100;i<160;i++)
+  {
+    auxiliar->clave = i;
+    arbol_borrar(arbol, auxiliar);
+  }
+  auxiliar->clave = 140;
+  pa2m_afirmar(arbol_buscar(arbol, auxiliar) == NULL, "Borro 60 elementos y ya no aparecen en el arbol");
   free(auxiliar);
   arbol_destruir(arbol);
 }

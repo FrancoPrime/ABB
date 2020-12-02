@@ -80,24 +80,22 @@ int arbol_insertar(abb_t* arbol, void* elemento){
     bool encontre_posicion = false;
     nodo_abb_t* nodo_actual = arbol->nodo_raiz;
     while(!encontre_posicion){
-      int resultado = arbol->comparador(elemento, nodo_actual->elemento);
-      if(resultado == EL_PRIMERO_ES_MAYOR || resultado == SON_IGUALES){
+      int resultado_comparacion = arbol->comparador(elemento, nodo_actual->elemento);
+      if(resultado_comparacion == EL_PRIMERO_ES_MAYOR || resultado_comparacion == SON_IGUALES){
         if(nodo_actual->derecha == NULL){
           encontre_posicion = true;
           nodo_actual->derecha = nuevo_nodo;
         }
-        else{
+        else
           nodo_actual = nodo_actual->derecha;
-        }
       }
       else{
         if(nodo_actual->izquierda == NULL){
           encontre_posicion = true;
           nodo_actual->izquierda = nuevo_nodo;
         }
-        else{
+        else
           nodo_actual = nodo_actual->izquierda;
-        }
       }
     }
   }
@@ -109,62 +107,10 @@ int arbol_insertar(abb_t* arbol, void* elemento){
 void* sacar_minimo_elemento(nodo_abb_t* nodo, void* elemento_a_borrar)
 {
   while(nodo->derecha != NULL)
-  {
     nodo = nodo->derecha;
-  }
   void* auxiliar = nodo->elemento;
   nodo->elemento = elemento_a_borrar;
   return auxiliar;
-}
-
-//Recibe un nodo y un elemento a borrar
-//Si corresponde borra el actual y devuelve null
-//Sino se llama a sí misma con otro nodo hijo del actual y devuelve el nodo actual
-nodo_abb_t* destruir_nodo(abb_t* arbol, nodo_abb_t* nodo, void* elemento, bool* se_pudo_borrar)
-{
-  if(!nodo)
-    return NULL;
-  int resultado = arbol->comparador(elemento, nodo->elemento);
-  if(resultado == EL_PRIMERO_ES_MAYOR)
-    nodo->derecha = destruir_nodo(arbol, nodo->derecha, elemento, se_pudo_borrar);
-  else if(resultado == EL_PRIMERO_ES_MENOR)
-    nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, elemento, se_pudo_borrar);
-  else if(resultado == SON_IGUALES)
-  {
-    if(nodo->derecha == NULL && nodo->izquierda == NULL)
-    {
-      if(arbol->destructor)
-        arbol->destructor(nodo->elemento);
-      free(nodo);
-      nodo = NULL;
-      *se_pudo_borrar = true;
-    }
-    else if(nodo->derecha == NULL)
-    {
-      nodo_abb_t* auxiliar = nodo->izquierda;
-      if(arbol->destructor)
-        arbol->destructor(nodo->elemento);
-      free(nodo);
-      nodo = auxiliar;
-      *se_pudo_borrar = true;
-    }
-    else if(nodo->izquierda == NULL)
-    {
-      nodo_abb_t* auxiliar = nodo->derecha;
-      if(arbol->destructor)
-        arbol->destructor(nodo->elemento);
-      free(nodo);
-      nodo = auxiliar;
-      *se_pudo_borrar = true;
-    }
-    else
-    {
-      void* auxiliar = nodo->elemento;
-      nodo->elemento = sacar_minimo_elemento(nodo->izquierda, auxiliar);
-      nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, auxiliar, se_pudo_borrar);
-    }
-  }
-  return nodo;
 }
 
 /*
@@ -182,7 +128,7 @@ bool arbol_vacio(abb_t* arbol){
  * funcion de comparación).
  *
  * Devuelve el elemento encontrado o NULL si no lo encuentra.
- */
+*/
 void* arbol_buscar(abb_t* arbol, void* elemento){
   if(arbol_vacio(arbol))
     return NULL;
@@ -190,10 +136,10 @@ void* arbol_buscar(abb_t* arbol, void* elemento){
   bool encontrado = false;
   while(!encontrado && nodo_actual != NULL)
   {
-    int resultado = arbol->comparador(elemento, nodo_actual->elemento);
-    if(resultado == EL_PRIMERO_ES_MAYOR)
+    int resultado_comparacion = arbol->comparador(elemento, nodo_actual->elemento);
+    if(resultado_comparacion == EL_PRIMERO_ES_MAYOR)
       nodo_actual = nodo_actual->derecha;
-    else if(resultado == EL_PRIMERO_ES_MENOR)
+    else if(resultado_comparacion == EL_PRIMERO_ES_MENOR)
       nodo_actual = nodo_actual->izquierda;
     else
       encontrado = true;
@@ -201,6 +147,61 @@ void* arbol_buscar(abb_t* arbol, void* elemento){
   if(nodo_actual == NULL)
     return NULL;
   return (nodo_actual->elemento);
+}
+
+//Pre: Recibe un nodo no nulo
+//Post: Devuelve true solo si ambos hijos son nulos
+bool es_nodo_hoja(nodo_abb_t* nodo)
+{
+  return (nodo->derecha == NULL && nodo->izquierda == NULL);
+}
+
+//Pre: Recibe un nodo no nulo
+//Post: Devuelve true solo si alguno de sus hijos son no nulos
+bool tiene_un_hijo(nodo_abb_t* nodo)
+{
+  return (nodo->derecha == NULL || nodo->izquierda == NULL);
+}
+
+//Recibe un nodo y un elemento a borrar
+//Si corresponde borra el actual y devuelve null
+//Sino se llama a sí misma con otro nodo hijo del actual y devuelve el nodo actual
+nodo_abb_t* destruir_nodo(abb_t* arbol, nodo_abb_t* nodo, void* elemento, bool* se_pudo_borrar)
+{
+  if(!nodo)
+    return NULL;
+  int resultado_comparacion = arbol->comparador(elemento, nodo->elemento);
+  if(resultado_comparacion == EL_PRIMERO_ES_MAYOR)
+    nodo->derecha = destruir_nodo(arbol, nodo->derecha, elemento, se_pudo_borrar);
+  else if(resultado_comparacion == EL_PRIMERO_ES_MENOR)
+    nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, elemento, se_pudo_borrar);
+  else if(resultado_comparacion == SON_IGUALES)
+  {
+    if(es_nodo_hoja(nodo))
+    {
+      if(arbol->destructor)
+        arbol->destructor(nodo->elemento);
+      free(nodo);
+      nodo = NULL;
+      *se_pudo_borrar = true;
+    }
+    else if(tiene_un_hijo(nodo))
+    {
+      nodo_abb_t* auxiliar = nodo->derecha == NULL ? nodo->izquierda : nodo->derecha;
+      if(arbol->destructor)
+        arbol->destructor(nodo->elemento);
+      free(nodo);
+      nodo = auxiliar;
+      *se_pudo_borrar = true;
+    }
+    else
+    {
+      void* auxiliar = nodo->elemento;
+      nodo->elemento = sacar_minimo_elemento(nodo->izquierda, auxiliar);
+      nodo->izquierda = destruir_nodo(arbol, nodo->izquierda, auxiliar, se_pudo_borrar);
+    }
+  }
+  return nodo;
 }
 
 /*
@@ -228,6 +229,9 @@ void* arbol_raiz(abb_t* arbol){
   return(arbol->nodo_raiz->elemento);
 }
 
+//Pre: Recibe un nodo, una array con tope y un indice
+//Post: Mientras el indice no exceda al tope, se llenará el array recorriendo
+//el arbol de modo inorden.
 void recorrido_inorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* indice)
 {
   if(nodo == NULL || *indice >= tope)
@@ -241,6 +245,9 @@ void recorrido_inorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* 
   }
 }
 
+//Pre: Recibe un nodo, una array con tope y un indice
+//Post: Mientras el indice no exceda al tope, se llenará el array recorriendo
+//el arbol de modo preorden.
 void recorrido_preorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* indice)
 {
   if(nodo == NULL || *indice >= tope)
@@ -251,6 +258,9 @@ void recorrido_preorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t*
   recorrido_preorden_aux(nodo->derecha, array, tope, indice);
 }
 
+//Pre: Recibe un nodo, una array con tope y un indice
+//Post: Mientras el indice no exceda al tope, se llenará el array recorriendo
+//el arbol de modo postorden.
 void recorrido_postorden_aux(nodo_abb_t* nodo, void** array, size_t tope, size_t* indice)
 {
   if(nodo == NULL || *indice >= tope)
@@ -339,6 +349,9 @@ void arbol_destruir(abb_t* arbol){
   free(arbol);
 }
 
+//Pre: Recibe un nodo, una función con contexto y un puntero a bool
+//Post: Mientras el bool sea falso y se pueda, se ejecutará la función recorriendo
+//el arbol de modo inorden. Dicha función será la que modifique al bool.
 size_t iteracion_inorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
 {
   if(nodo == NULL || (*detenerse))
@@ -352,6 +365,9 @@ size_t iteracion_inorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* 
   return 1 + parcial + iteracion_inorden(nodo->derecha, funcion, extra, detenerse);
 }
 
+//Pre: Recibe un nodo, una función con contexto y un puntero a bool
+//Post: Mientras el bool sea falso y se pueda, se ejecutará la función recorriendo
+//el arbol de modo preorden. Dicha función será la que modifique al bool.
 size_t iteracion_preorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
 {
   if(nodo == NULL || (*detenerse))
@@ -365,6 +381,9 @@ size_t iteracion_preorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void*
   return 1 + parcial + iteracion_preorden(nodo->derecha, funcion, extra, detenerse);
 }
 
+//Pre: Recibe un nodo, una función con contexto y un puntero a bool
+//Post: Mientras el bool sea falso y se pueda, se ejecutará la función recorriendo
+//el arbol de modo postorden. Dicha función será la que modifique al bool.
 size_t iteracion_postorden(nodo_abb_t* nodo, bool (*funcion)(void*, void*), void* extra, bool* detenerse)
 {
   if(nodo == NULL || (*detenerse))
